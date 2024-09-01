@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArUco Marker Tracker</title>
+    <style>
+        video, canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/js-aruco@1.2.0/js/aruco.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsfeat"></script>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        // Access the webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                video.srcObject = stream;
+            })
+            .catch((err) => {
+                console.error("Error accessing the webcam", err);
+            });
+
+        const detector = new AR.Detector();
+
+        function trackMarker() {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const markers = detector.detect(imageData);
+
+            markers.forEach((marker) => {
+                // Draw the marker's outline
+                context.beginPath();
+                context.moveTo(marker.corners[0].x, marker.corners[0].y);
+                for (let i = 1; i < marker.corners.length; i++) {
+                    context.lineTo(marker.corners[i].x, marker.corners[i].y);
+                }
+                context.closePath();
+                context.lineWidth = 3;
+                context.strokeStyle = 'red';
+                context.stroke();
+
+                // Log the marker ID
+                console.log(`Marker ID: ${marker.id}`);
+            });
+
+            requestAnimationFrame(trackMarker);
+        }
+
+        video.addEventListener('play', () => {
+            trackMarker();
+        });
+    </script>
+</body>
+</html>
